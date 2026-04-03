@@ -3,11 +3,158 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// CLIENTS
+// ─────────────────────────────────────────
+model Client {
+  id          String     @id @default(uuid())
+  name        String
+  industry    String
+  website     String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  campaigns   Campaign[]
+
+  @@map("clients")
+}
+
+// ─────────────────────────────────────────
+// CAMPAIGNS
+// ─────────────────────────────────────────
+model Campaign {
+  id          String    @id @default(uuid())
+  name        String
+  status      Status    @default(active)
+  objective   String?
+  budget      Float
+  spend       Float     @default(0)
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  clientId    String    @map("client_id")
+  client      Client    @relation(fields: [clientId], references: [id])
+
+  metrics     CampaignMetric[]
+  briefs      CreativeBrief[]
+  alertRules  AlertRule[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("campaigns")
+}
+
+enum Status {
+  active
+  paused
+  completed
+  draft
+}
+
+// ─────────────────────────────────────────
+// CAMPAIGN METRICS (daily snapshots)
+// ─────────────────────────────────────────
+model CampaignMetric {
+  id          String   @id @default(uuid())
+  date        DateTime
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  spend       Float    @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  campaignId  String   @map("campaign_id")
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([date])
+  @@map("campaign_metrics")
+}
+
+// ─────────────────────────────────────────
+// CREATIVE BRIEFS
+// ─────────────────────────────────────────
+model CreativeBrief {
+  id             String   @id @default(uuid())
+  clientName     String   @map("client_name")
+  industry       String
+  website        String?
+  competitors    String?
+  objective      String
+  audience       String
+  budget         Float
+  tone           String?
+  imageryStyle   String?  @map("imagery_style")
+  colorDirection String?  @map("color_direction")
+  dos            String?
+  donts          String?
+  aiOutput       Json?    @map("ai_output")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  campaignId     String?  @map("campaign_id")
+  campaign       Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("creative_briefs")
+}
+
+// ─────────────────────────────────────────
+// ALERT RULES
+// ─────────────────────────────────────────
+model AlertRule {
+  id         String        @id @default(uuid())
+  metric     String        // e.g. "ctr", "spend"
+  operator   String        // e.g. "below", "above"
+  threshold  Float
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  campaignId String        @map("campaign_id")
+  campaign   Campaign      @relation(fields: [campaignId], references: [id])
+
+  alerts     AlertHistory[]
+
+  @@index([campaignId])
+  @@map("alert_rules")
+}
+
+// ─────────────────────────────────────────
+// ALERT HISTORY
+// ─────────────────────────────────────────
+model AlertHistory {
+  id          String    @id @default(uuid())
+  message     String
+  isRead      Boolean   @default(false) @map("is_read")
+  triggeredAt DateTime  @default(now()) @map("triggered_at")
+
+  campaignId  String    @map("campaign_id")
+  ruleId      String    @map("rule_id")
+  rule        AlertRule @relation(fields: [ruleId], references: [id])
+
+  @@index([campaignId])
+  @@index([isRead])
+  @@map("alert_history")
+}
+
+// ─────────────────────────────────────────
+// USERS (for JWT auth)
+// ─────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
 }
