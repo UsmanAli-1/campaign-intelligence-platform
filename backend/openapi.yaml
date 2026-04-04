@@ -1,0 +1,444 @@
+openapi: 3.0.0
+info:
+  title: Campaign Intelligence Platform API
+  version: 1.0.0
+  description: RESTful API for managing advertising campaigns with JWT authentication
+
+servers:
+  - url: http://localhost:5000
+    description: Local development
+  - url: https://your-backend.onrender.com
+    description: Production (Render)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, paused, completed, draft]
+        objective:
+          type: string
+          enum: [awareness, consideration, conversion]
+        budget:
+          type: number
+        spend:
+          type: number
+        clientId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+paths:
+
+  # ─── AUTH ───────────────────────────────────────
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  example: admin@agency.com
+                password:
+                  type: string
+                  example: admin123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─── CAMPAIGNS ──────────────────────────────────
+  /api/campaigns:
+    get:
+      tags: [Campaigns]
+      summary: List all campaigns
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, paused, completed, draft]
+        - in: query
+          name: clientId
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [name, budget, spend, createdAt, status]
+            default: createdAt
+        - in: query
+          name: sortDir
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Campaign'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Campaigns]
+      summary: Create a new campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, clientId, budget]
+              properties:
+                name:
+                  type: string
+                  example: Summer Launch 2024
+                clientId:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, paused, completed, draft]
+                  default: draft
+                objective:
+                  type: string
+                  enum: [awareness, consideration, conversion]
+                budget:
+                  type: number
+                  example: 50000
+                spend:
+                  type: number
+                  example: 0
+      responses:
+        '201':
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Campaign'
+                  message:
+                    type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /api/campaigns/{id}:
+    get:
+      tags: [Campaigns]
+      summary: Get single campaign with metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Campaign'
+        '404':
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Campaigns]
+      summary: Update a campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, paused, completed, draft]
+                objective:
+                  type: string
+                budget:
+                  type: number
+                spend:
+                  type: number
+      responses:
+        '200':
+          description: Campaign updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Campaign'
+                  message:
+                    type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags: [Campaigns]
+      summary: Soft delete a campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Campaign soft deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ─── CLIENTS ────────────────────────────────────
+  /api/clients:
+    get:
+      tags: [Clients]
+      summary: List all clients
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+
+  # ─── ALERTS ─────────────────────────────────────
+  /api/alerts:
+    get:
+      tags: [Alerts]
+      summary: Get all alert history
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Alert history list
+
+  /api/alerts/read-all:
+    patch:
+      tags: [Alerts]
+      summary: Mark all alerts as read
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All marked as read
+
+  /api/alerts/{id}/read:
+    patch:
+      tags: [Alerts]
+      summary: Mark single alert as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert marked as read
+
+  /api/alerts/rules:
+    get:
+      tags: [Alerts]
+      summary: Get all alert rules
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Alert rules list
+
+    post:
+      tags: [Alerts]
+      summary: Create alert rule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [campaignId, metric, operator, threshold]
+              properties:
+                campaignId:
+                  type: string
+                metric:
+                  type: string
+                  enum: [ctr, spend, impressions, clicks, conversions]
+                operator:
+                  type: string
+                  enum: [above, below]
+                threshold:
+                  type: number
+      responses:
+        '201':
+          description: Rule created
+
+  # ─── BRIEF ──────────────────────────────────────
+  /api/brief/generate:
+    post:
+      tags: [AI Brief]
+      summary: Generate AI creative brief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clientName, industry, objective, audience, budget]
+              properties:
+                clientName:
+                  type: string
+                industry:
+                  type: string
+                website:
+                  type: string
+                competitors:

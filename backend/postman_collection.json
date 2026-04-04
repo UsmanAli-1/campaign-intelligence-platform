@@ -1,0 +1,238 @@
+{
+  "info": {
+    "name": "Campaign Intelligence Platform API",
+    "description": "Full API collection for the Campaign Intelligence Platform assessment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) {",
+                  "  pm.collectionVariables.set('token', res.token);",
+                  "  console.log('Token saved!');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@agency.com\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "Get All Campaigns",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/campaigns?page=1&limit=10&status=active",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "active" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Campaign By ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/campaigns/CAMPAIGN_ID_HERE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Campaign",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/campaigns",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Launch 2024\",\n  \"clientId\": \"CLIENT_ID_HERE\",\n  \"status\": \"draft\",\n  \"objective\": \"awareness\",\n  \"budget\": 50000,\n  \"spend\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Campaign",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/campaigns/CAMPAIGN_ID_HERE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"spend\": 15000\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Campaign (Soft)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/campaigns/CAMPAIGN_ID_HERE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Filter by Client",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/campaigns?clientId=CLIENT_ID&sortBy=budget&sortDir=desc",
+              "query": [
+                { "key": "clientId", "value": "CLIENT_ID" },
+                { "key": "sortBy", "value": "budget" },
+                { "key": "sortDir", "value": "desc" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/clients",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get Alert History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/alerts",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Mark All As Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/alerts/read-all",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Alert Rules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/alerts/rules",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Create Alert Rule",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/alerts/rules",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaignId\": \"CAMPAIGN_ID_HERE\",\n  \"metric\": \"ctr\",\n  \"operator\": \"below\",\n  \"threshold\": 1.0\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Brief",
+      "item": [
+        {
+          "name": "Generate Creative Brief",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/brief/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientName\": \"Lumiere Skincare\",\n  \"industry\": \"Beauty\",\n  \"website\": \"lumiere.com\",\n  \"competitors\": \"The Ordinary, CeraVe\",\n  \"objective\": \"awareness\",\n  \"audience\": \"Women 25-40 interested in skincare\",\n  \"budget\": 50000,\n  \"tone\": \"Luxurious\",\n  \"imageryStyle\": \"Photography\",\n  \"colorDirection\": \"Soft pastels and rose gold\",\n  \"dos\": \"Show real skin, natural lighting\",\n  \"donts\": \"No heavy filters\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Login — Wrong Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@agency.com\",\n  \"password\": \"wrongpassword\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Campaign — Missing Fields",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/campaigns",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "No Token — Should Return 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/campaigns"
+          }
+        }
+      ]
+    }
+  ]
+}
