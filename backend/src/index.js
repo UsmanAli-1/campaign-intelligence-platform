@@ -38,7 +38,8 @@ app.use('/api', limiter)
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/campaigns', require('./routes/campaigns'))
 app.use('/api/clients', require('./routes/clients'))
-app.use('/api/alerts', require('./routes/alerts'))
+// app.use('/api/alerts', require('./routes/alerts'))
+app.use('/api/brief', require('./routes/brief'))
 
 // Health check
 app.get('/health', (req, res) => {
