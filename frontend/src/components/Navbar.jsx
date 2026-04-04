@@ -1,4 +1,5 @@
 import { useTheme } from '../context/ThemeContext'
+import NotificationCenter from './NotificationCenter'
 
 export default function Navbar({ dateRange, setDateRange, onMenuClick }) {
   const { darkMode, setDarkMode } = useTheme()
@@ -42,8 +43,13 @@ export default function Navbar({ dateRange, setDateRange, onMenuClick }) {
       <div className="flex items-center gap-2">
         {/* Date — hidden on small screens */}
         <span className={`hidden md:block text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          })}
         </span>
+
+        {/* Notification Bell */}
+        <NotificationCenter />
 
         {/* Dark mode toggle */}
         <button onClick={() => setDarkMode(!darkMode)}

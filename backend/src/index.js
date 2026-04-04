@@ -2,9 +2,21 @@ const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
+const http = require('http')
+const { Server } = require('socket.io')
+const { runAlertEngine } = require('./services/alertEngine')
 require('dotenv').config()
 
 const app = express()
+const server = http.createServer(app)
+
+// Socket.io setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+})
 
 // Security
 app.use(helmet())
@@ -14,7 +26,7 @@ app.use(cors({
 }))
 app.use(express.json())
 
-// Rate limiting — 100 req/min per IP
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 60 * 1000,
   max: 100,
@@ -26,6 +38,7 @@ app.use('/api', limiter)
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/campaigns', require('./routes/campaigns'))
 app.use('/api/clients', require('./routes/clients'))
+app.use('/api/alerts', require('./routes/alerts'))
 
 // Health check
 app.get('/health', (req, res) => {
@@ -43,7 +56,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong.' })
 })
 
+// Socket.io connection
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id)
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id)
+  })
+})
+
+// Run alert engine every 30 seconds
+setInterval(() => {
+  runAlertEngine(io)
+}, 30000)
+
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`✅ Backend running on port ${PORT}`)
-})  
+server.listen(PORT, () => {
+  console.log(`✅ Backend + WebSocket running on port ${PORT}`)
+})
