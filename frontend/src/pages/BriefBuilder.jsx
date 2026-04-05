@@ -77,7 +77,7 @@ export default function BriefBuilder() {
   const handleSubmit = async () => {
     setLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/brief/generate', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/brief/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
