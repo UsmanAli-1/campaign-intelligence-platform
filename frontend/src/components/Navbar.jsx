@@ -1,7 +1,7 @@
 import { useTheme } from '../context/ThemeContext'
 import NotificationCenter from './NotificationCenter'
 
-export default function Navbar({ dateRange, setDateRange, onMenuClick }) {
+export default function Navbar({ dateRange, setDateRange, onMenuClick, activePage }) {
   const { darkMode, setDarkMode } = useTheme()
 
   const ranges = [
@@ -14,7 +14,7 @@ export default function Navbar({ dateRange, setDateRange, onMenuClick }) {
     <header className={`h-16 flex items-center justify-between px-3 sm:px-4 border-b shrink-0 gap-2
       ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`}>
 
-      {/* LEFT — Hamburger + Date Range */}
+      {/* LEFT — Hamburger + Date Range (dashboard only) */}
       <div className="flex items-center gap-2 min-w-0">
 
         {/* Hamburger — mobile only */}
@@ -27,20 +27,29 @@ export default function Navbar({ dateRange, setDateRange, onMenuClick }) {
           <div className="w-4 h-0.5 bg-current" />
         </button>
 
-        {/* Date range buttons */}
-        <div className="flex items-center gap-2">
-          {ranges.map(r => (
-            <button key={r.value} onClick={() => setDateRange(r.value)}
-              className={`px-4 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap
-                ${dateRange === r.value
-                  ? 'bg-blue-600 text-white'
-                  : darkMode
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-              <span className="hidden sm:inline">Last </span>{r.label}
-            </button>
-          ))}
-        </div>
+        {/* Date range — only on dashboard */}
+        {activePage === 'dashboard' && (
+          <div className="flex items-center gap-1">
+            {ranges.map(r => (
+              <button key={r.value} onClick={() => setDateRange(r.value)}
+                className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap
+                  ${dateRange === r.value
+                    ? 'bg-blue-600 text-white'
+                    : darkMode
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <span className="hidden sm:inline">Last </span>{r.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Page title on non-dashboard pages */}
+        {activePage !== 'dashboard' && (
+          <span className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            {activePage === 'brief' ? '✍️ Brief Builder' : '⚙️ Settings'}
+          </span>
+        )}
       </div>
 
       {/* RIGHT — Date + Bell + Dark mode */}
