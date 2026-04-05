@@ -20,8 +20,11 @@ A full-stack web application built for an advertising agency to manage campaigns
 
 ## Project Structure
 campaign-platform/
+
 ├── frontend/        # React 18 + Vite + Tailwind
+
 ├── backend/         # Express.js REST API
+
 └── ai-service/      # AI Content Generation Microservice
 
 ---
