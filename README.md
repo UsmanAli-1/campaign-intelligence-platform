@@ -1,5 +1,7 @@
 # Campaign Intelligence Platform
 
+Preview : https://campaign-platform-ai.vercel.app/
+
 A full-stack web application built for an advertising agency to manage campaigns, generate AI creative briefs, and monitor real-time performance alerts.
 
 ---
