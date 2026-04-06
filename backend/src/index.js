@@ -19,15 +19,42 @@ const io = new Server(server, {
 })
 
 // Security
-app.use(helmet())
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://campaign-platform-ai.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
-  credentials: true
+// Security
+app.use(helmet({
+  crossOriginResourcePolicy: false
 }))
+
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://campaign-platform-ai.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean)
+
+    // Allow requests with no origin (Postman, mobile apps)
+    if (!origin) return callback(null, true)
+
+    // Remove trailing slash for comparison
+    const cleanOrigin = origin.replace(/\/$/, '')
+
+    if (allowedOrigins.some(allowed => allowed.replace(/\/$/, '') === cleanOrigin)) {
+      callback(null, true)
+    } else {
+      console.log('CORS blocked origin:', origin)
+      console.log('Allowed origins:', allowedOrigins)
+      callback(null, true) // temporarily allow all for debugging
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}))
+
+// Handle preflight requests
+app.options('*', cors())
+
 app.use(express.json())
 
 // Rate limiting
@@ -42,7 +69,7 @@ app.use('/api', limiter)
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/campaigns', require('./routes/campaigns'))
 app.use('/api/clients', require('./routes/clients'))
-// app.use('/api/alerts', require('./routes/alerts'))
+app.use('/api/alerts', require('./routes/alerts'))
 app.use('/api/brief', require('./routes/brief'))
 
 // Health check
