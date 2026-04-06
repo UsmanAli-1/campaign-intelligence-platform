@@ -10,21 +10,8 @@ require('dotenv').config()
 const app = express()
 const server = http.createServer(app)
 
-// Socket.io setup
-const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
-  }
-})
-
-// Security
-// Security
-app.use(helmet({
-  crossOriginResourcePolicy: false
-}))
-
-app.use(cors({
+// CORS config
+const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'http://localhost:5173',
@@ -33,29 +20,51 @@ app.use(cors({
       process.env.FRONTEND_URL
     ].filter(Boolean)
 
-    // Allow requests with no origin (Postman, mobile apps)
     if (!origin) return callback(null, true)
-
-    // Remove trailing slash for comparison
     const cleanOrigin = origin.replace(/\/$/, '')
-
-    if (allowedOrigins.some(allowed => allowed.replace(/\/$/, '') === cleanOrigin)) {
+    const isAllowed = allowedOrigins.some(
+      allowed => allowed.replace(/\/$/, '') === cleanOrigin
+    )
+    if (isAllowed) {
       callback(null, true)
     } else {
-      console.log('CORS blocked origin:', origin)
-      console.log('Allowed origins:', allowedOrigins)
-      callback(null, true) // temporarily allow all for debugging
+      console.log('CORS blocked:', origin)
+      callback(null, true) // allow all for now
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}))
+}
 
-// Handle preflight requests
-app.options('*', cors())
+// Socket.io setup
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'https://campaign-platform-ai.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    methods: ['GET', 'POST']
+  }
+})
 
+// Middleware
+app.use(helmet({ crossOriginResourcePolicy: false }))
+app.use(cors(corsOptions))
 app.use(express.json())
+
+// Handle preflight — specific path instead of wildcard
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*')
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+    res.header('Access-Control-Allow-Credentials', 'true')
+    return res.sendStatus(204)
+  }
+  next()
+})
 
 // Rate limiting
 const limiter = rateLimit({
@@ -91,7 +100,6 @@ app.use((err, req, res, next) => {
 // Socket.io connection
 io.on('connection', (socket) => {
   console.log('🔌 Client connected:', socket.id)
-
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id)
   })
